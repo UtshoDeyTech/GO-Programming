@@ -442,7 +442,69 @@ type error interface {
 - Panic appropriately
 
 ### 9.3 Performance
-- Memory management
+
+#### Memory Management
+
+##### Memory Allocation Functions
+
+1. `new()` Function:
+- Allocates memory but does not initialize it
+- Returns a pointer to zeroed storage
+- Use cases:
+  - When you need a pointer to a zeroed value
+  - For basic types and structs
+- Characteristics:
+  - Memory is zeroed
+  - Returns memory address
+  - No initialization performed
+- Example:
+  ```go
+  ptr := new(int)    // Returns *int pointing to zeroed storage
+  str := new(string) // Returns *string pointing to empty string
+  ```
+
+2. `make()` Function:
+- Allocates and initializes memory
+- Used only for slices, maps, and channels
+- Returns initialized (non-zeroed) storage
+- Characteristics:
+  - Memory is allocated and initialized
+  - Returns the actual value (not a pointer)
+  - Proper initialization of internal data structures
+- Example:
+  ```go
+  slice := make([]int, 5)    // Creates initialized slice
+  m := make(map[string]int)  // Creates initialized map
+  ch := make(chan int, 10)   // Creates initialized channel
+  ```
+
+##### Comparison Table
+
+| Feature | new() | make() |
+|---------|-------|--------|
+| Returns | Pointer | Value |
+| Memory State | Zeroed | Initialized |
+| Usage | Any type | Only slice, map, channel |
+| Internal Structures | No initialization | Fully initialized |
+
+##### When to Use What
+
+1. Use `new()` when:
+   - You need a pointer to zeroed storage
+   - Working with basic types or structs
+   - No initialization needed
+
+2. Use `make()` when:
+   - Creating slices, maps, or channels
+   - Need initialized internal data structures
+   - Working with reference types
+
+##### Memory Management Best Practices
+- Choose appropriate allocation method based on type and use case
+- Consider using var for zero-value initialization
+- Use make() for slices with a known capacity
+- Properly size maps to avoid resizing
+- Consider memory pooling for frequently allocated objects
 - Goroutine usage
 - Channel sizing
 - Benchmark testing
