@@ -13,16 +13,10 @@ func main() {
 	content := "This needs to go in a file - utshodey.tech"
 
 	file, err := os.Create("./myfile.txt")
-
-	if err != nil {
-		panic(err)
-	}
+	checkNilErr(err)
 
 	length, err := io.WriteString(file, content)
-
-	if err != nil {
-		panic(err)
-	}
+	checkNilErr(err)
 
 	fmt.Println("File length is:", length)
 	defer file.Close()
@@ -37,23 +31,23 @@ func main() {
 
 func readFile(filename string) {
 	databyte, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
+	checkNilErr(err)
 
 	fmt.Println("The text data inside the file is-\n", string(databyte))
 }
 
 func appendToFile(filename, content string) {
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
+	checkNilErr(err)
 	defer file.Close()
 
 	_, err = file.WriteString(content)
+	checkNilErr(err)
+	fmt.Println("Successfully appended data to file")
+}
+
+func checkNilErr(err error) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Successfully appended data to file")
 }
