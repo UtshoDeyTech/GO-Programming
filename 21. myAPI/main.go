@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"time"
 )
 
-// User represents our data structure
+// Data Structures
 type User struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -17,197 +18,298 @@ type User struct {
 	CreatedAt string `json:"created_at"`
 }
 
-// Simple in-memory database
+type Response struct {
+	Message string `json:"message"`
+	Status  int    `json:"status"`
+	Data    any    `json:"data,omitempty"`
+}
+
+// Global variables
 var users = []User{
 	{ID: 1, Name: "John Doe", Email: "john@example.com", CreatedAt: time.Now().Format(time.RFC3339)},
 }
 
-func main() {
-	// 1. GET endpoint - Get all users
-	http.HandleFunc("/api/get", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+// Logger function
+func logEndpoint(r *http.Request, startTime time.Time, statusCode int) {
+	duration := time.Since(startTime)
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(users)
-	})
-
-	// 2. POST endpoint - Create new user
-	http.HandleFunc("/api/post", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		var newUser User
-		if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Set user details
-		newUser.ID = len(users) + 1
-		newUser.CreatedAt = time.Now().Format(time.RFC3339)
-		users = append(users, newUser)
-
-		// Save to JSON file
-		saveUsersToFile()
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(newUser)
-	})
-
-	// 3. PUT endpoint - Update user
-	http.HandleFunc("/api/put/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		// Get user ID from URL
-		id := r.URL.Path[len("/api/put/"):]
-		var updatedUser User
-		if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Update user
-		found := false
-		for i := range users {
-			if fmt.Sprint(users[i].ID) == id {
-				updatedUser.ID = users[i].ID
-				updatedUser.CreatedAt = users[i].CreatedAt
-				users[i] = updatedUser
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			http.Error(w, "User not found", http.StatusNotFound)
-			return
-		}
-
-		saveUsersToFile()
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(updatedUser)
-	})
-
-	// 4. DELETE endpoint - Delete user
-	http.HandleFunc("/api/delete/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodDelete {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		id := r.URL.Path[len("/api/delete/"):]
-		found := false
-		for i := range users {
-			if fmt.Sprint(users[i].ID) == id {
-				users = append(users[:i], users[i+1:]...)
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			http.Error(w, "User not found", http.StatusNotFound)
-			return
-		}
-
-		saveUsersToFile()
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"message": "User deleted successfully"})
-	})
-
-	// 5. FormData endpoint - Handle form submissions
-	http.HandleFunc("/api/form", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Get form data
-		newUser := User{
-			ID:        len(users) + 1,
-			Name:      r.FormValue("name"),
-			Email:     r.FormValue("email"),
-			CreatedAt: time.Now().Format(time.RFC3339),
-		}
-
-		users = append(users, newUser)
-		saveUsersToFile()
-
-		// Save form data to a text file
-		formData := fmt.Sprintf("ID: %d\nName: %s\nEmail: %s\nCreated At: %s\n\n",
-			newUser.ID, newUser.Name, newUser.Email, newUser.CreatedAt)
-		os.WriteFile("form_submissions.txt", []byte(formData), 0644)
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(newUser)
-	})
-
-	// 6. File Upload endpoint
-	http.HandleFunc("/api/upload", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		// Parse multipart form with 10 MB max memory
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Get file from form
-		file, handler, err := r.FormFile("file")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		defer file.Close()
-
-		// Create uploads directory if it doesn't exist
-		os.MkdirAll("uploads", os.ModePerm)
-
-		// Create new file in uploads directory
-		dst, err := os.Create(fmt.Sprintf("uploads/%s", handler.Filename))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer dst.Close()
-
-		// Copy uploaded file to destination
-		if _, err := io.Copy(dst, file); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": fmt.Sprintf("File %s uploaded successfully", handler.Filename),
-		})
-	})
-
-	fmt.Println("Server starting on port 8080...")
-	http.ListenAndServe(":8080", nil)
+	fmt.Printf("\n=== Request Log ===\n")
+	fmt.Printf("Timestamp: %v\n", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Printf("Method: %s\n", r.Method)
+	fmt.Printf("Endpoint: %s\n", r.URL.Path)
+	fmt.Printf("Status: %d\n", statusCode)
+	fmt.Printf("Duration: %v\n", duration)
+	fmt.Printf("Client IP: %s\n", r.RemoteAddr)
+	fmt.Printf("================\n")
 }
 
-// Helper function to save users to a JSON file
+// GET handler function
+func handleGetUsers(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logEndpoint(r, startTime, http.StatusMethodNotAllowed)
+		return
+	}
+
+	response := Response{
+		Message: "Users retrieved successfully",
+		Status:  http.StatusOK,
+		Data:    users,
+	}
+
+	sendJSONResponse(w, response)
+	logEndpoint(r, startTime, http.StatusOK)
+}
+
+// POST handler function
+func handleCreateUser(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logEndpoint(r, startTime, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var newUser User
+	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		logEndpoint(r, startTime, http.StatusBadRequest)
+		return
+	}
+
+	newUser.ID = getNextUserID()
+	newUser.CreatedAt = time.Now().Format(time.RFC3339)
+	users = append(users, newUser)
+
+	saveUsersToFile()
+
+	response := Response{
+		Message: "User created successfully",
+		Status:  http.StatusCreated,
+		Data:    newUser,
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	sendJSONResponse(w, response)
+	logEndpoint(r, startTime, http.StatusCreated)
+}
+
+// PUT handler function
+func handleUpdateUser(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logEndpoint(r, startTime, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := getUserIDFromURL(r.URL.Path, "/api/put/")
+	var updatedUser User
+	if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		logEndpoint(r, startTime, http.StatusBadRequest)
+		return
+	}
+
+	if !updateUserByID(id, &updatedUser) {
+		http.Error(w, "User not found", http.StatusNotFound)
+		logEndpoint(r, startTime, http.StatusNotFound)
+		return
+	}
+
+	saveUsersToFile()
+	sendJSONResponse(w, Response{
+		Message: "User updated successfully",
+		Status:  http.StatusOK,
+		Data:    updatedUser,
+	})
+	logEndpoint(r, startTime, http.StatusOK)
+}
+
+// DELETE handler function
+func handleDeleteUser(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logEndpoint(r, startTime, http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := getUserIDFromURL(r.URL.Path, "/api/delete/")
+	if !deleteUserByID(id) {
+		http.Error(w, "User not found", http.StatusNotFound)
+		logEndpoint(r, startTime, http.StatusNotFound)
+		return
+	}
+
+	saveUsersToFile()
+	sendJSONResponse(w, Response{
+		Message: "User deleted successfully",
+		Status:  http.StatusOK,
+	})
+	logEndpoint(r, startTime, http.StatusOK)
+}
+
+// Form data handler function
+func handleFormData(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logEndpoint(r, startTime, http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		logEndpoint(r, startTime, http.StatusBadRequest)
+		return
+	}
+
+	newUser := createUserFromForm(r)
+	users = append(users, newUser)
+	saveUsersToFile()
+	saveFormToFile(newUser)
+
+	sendJSONResponse(w, Response{
+		Message: "Form data processed successfully",
+		Status:  http.StatusOK,
+		Data:    newUser,
+	})
+	logEndpoint(r, startTime, http.StatusOK)
+}
+
+// File upload handler function
+func handleFileUpload(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		logEndpoint(r, startTime, http.StatusMethodNotAllowed)
+		return
+	}
+
+	file, handler, err := processFileUpload(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		logEndpoint(r, startTime, http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	if err := saveUploadedFile(file, handler); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logEndpoint(r, startTime, http.StatusInternalServerError)
+		return
+	}
+
+	sendJSONResponse(w, Response{
+		Message: fmt.Sprintf("File %s uploaded successfully", handler.Filename),
+		Status:  http.StatusOK,
+	})
+	logEndpoint(r, startTime, http.StatusOK)
+}
+
+// [Rest of the helper functions remain the same]
+func getNextUserID() int {
+	maxID := 0
+	for _, user := range users {
+		if user.ID > maxID {
+			maxID = user.ID
+		}
+	}
+	return maxID + 1
+}
+
+func getUserIDFromURL(path, prefix string) string {
+	return path[len(prefix):]
+}
+
+func updateUserByID(id string, updatedUser *User) bool {
+	for i, user := range users {
+		if fmt.Sprint(user.ID) == id {
+			updatedUser.ID = user.ID
+			updatedUser.CreatedAt = user.CreatedAt
+			users[i] = *updatedUser
+			return true
+		}
+	}
+	return false
+}
+
+func deleteUserByID(id string) bool {
+	for i, user := range users {
+		if fmt.Sprint(user.ID) == id {
+			users = append(users[:i], users[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func createUserFromForm(r *http.Request) User {
+	return User{
+		ID:        getNextUserID(),
+		Name:      r.FormValue("name"),
+		Email:     r.FormValue("email"),
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+}
+
+func processFileUpload(r *http.Request) (multipart.File, *multipart.FileHeader, error) {
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		return nil, nil, err
+	}
+	return r.FormFile("file")
+}
+
+func saveUploadedFile(file multipart.File, handler *multipart.FileHeader) error {
+	os.MkdirAll("uploads", os.ModePerm)
+	dst, err := os.Create(fmt.Sprintf("uploads/%s", handler.Filename))
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, file)
+	return err
+}
+
 func saveUsersToFile() {
 	data, _ := json.MarshalIndent(users, "", "    ")
 	os.WriteFile("users.json", data, 0644)
+}
+
+func saveFormToFile(user User) {
+	formData := fmt.Sprintf("ID: %d\nName: %s\nEmail: %s\nCreated At: %s\n\n",
+		user.ID, user.Name, user.Email, user.CreatedAt)
+	os.WriteFile("form_submissions.txt", []byte(formData), 0644)
+}
+
+func sendJSONResponse(w http.ResponseWriter, response Response) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func setupRoutes() {
+	fmt.Println("Setting up routes...")
+	http.HandleFunc("/api/get", handleGetUsers)
+	http.HandleFunc("/api/post", handleCreateUser)
+	http.HandleFunc("/api/put/", handleUpdateUser)
+	http.HandleFunc("/api/delete/", handleDeleteUser)
+	http.HandleFunc("/api/form", handleFormData)
+	http.HandleFunc("/api/upload", handleFileUpload)
+}
+
+func main() {
+	setupRoutes()
+	fmt.Println("Server starting on port 8080...")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Printf("Error starting server: %s\n", err)
+	}
 }

@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// Data Structures
 type User struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -19,182 +20,177 @@ type User struct {
 	CreatedAt string `json:"created_at"`
 }
 
+type Response struct {
+	Message string `json:"message"`
+	Status  int    `json:"status"`
+	Data    any    `json:"data,omitempty"`
+}
+
+const baseURL = "http://localhost:8080/api"
+
 func main() {
 	for {
-		fmt.Println("\n=== API Testing Menu ===")
-		fmt.Println("1. GET - Get all users")
-		fmt.Println("2. POST - Create new user")
-		fmt.Println("3. PUT - Update user")
-		fmt.Println("4. DELETE - Delete user")
-		fmt.Println("5. FORM - Submit form data")
-		fmt.Println("6. UPLOAD - Upload file")
-		fmt.Println("7. Exit")
-		fmt.Print("Choose an option (1-7): ")
-
-		var choice string
-		fmt.Scanln(&choice)
-
-		switch choice {
-		case "1":
-			getAllUsers()
-		case "2":
-			createUser()
-		case "3":
-			updateUser()
-		case "4":
-			deleteUser()
-		case "5":
-			submitForm()
-		case "6":
-			uploadFile()
-		case "7":
+		choice := displayMenu()
+		if choice == "7" {
 			fmt.Println("Exiting...")
-			return
-		default:
-			fmt.Println("Invalid option!")
+			break
 		}
+		handleUserChoice(choice)
 	}
 }
 
-// 1. GET - Get all users
+// Menu Functions
+func displayMenu() string {
+	fmt.Println("\n=== API Testing Menu ===")
+	fmt.Println("1. GET - Get all users")
+	fmt.Println("2. POST - Create new user")
+	fmt.Println("3. PUT - Update user")
+	fmt.Println("4. DELETE - Delete user")
+	fmt.Println("5. FORM - Submit form data")
+	fmt.Println("6. UPLOAD - Upload file")
+	fmt.Println("7. Exit")
+	fmt.Print("Choose an option (1-7): ")
+
+	var choice string
+	fmt.Scanln(&choice)
+	return choice
+}
+
+func handleUserChoice(choice string) {
+	switch choice {
+	case "1":
+		getAllUsers()
+	case "2":
+		createUser()
+	case "3":
+		updateUser()
+	case "4":
+		deleteUser()
+	case "5":
+		submitForm()
+	case "6":
+		uploadFile()
+	default:
+		fmt.Println("Invalid option!")
+	}
+}
+
+// API Functions
 func getAllUsers() {
-	resp, err := http.Get("http://localhost:8080/api/get")
+	fmt.Println("\nGetting all users...")
+	resp, err := makeGetRequest("/get")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	var users []User
-	json.NewDecoder(resp.Body).Decode(&users)
-
-	fmt.Println("\nUsers List:")
-	for _, user := range users {
-		fmt.Printf("ID: %d, Name: %s, Email: %s, Created: %s\n",
-			user.ID, user.Name, user.Email, user.CreatedAt)
+	var response Response
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		fmt.Printf("Error parsing response: %v\n", err)
+		return
 	}
+
+	displayUsers(response.Data)
 }
 
-// 2. POST - Create new user
 func createUser() {
-	var name, email string
-	fmt.Print("Enter name: ")
-	fmt.Scanln(&name)
-	fmt.Print("Enter email: ")
-	fmt.Scanln(&email)
+	fmt.Println("\nCreating new user...")
+	userData := getUserInput()
+	jsonData, err := json.Marshal(userData)
+	if err != nil {
+		fmt.Printf("Error creating JSON: %v\n", err)
+		return
+	}
 
-	newUser := User{Name: name, Email: email}
-	jsonData, _ := json.Marshal(newUser)
-
-	resp, err := http.Post("http://localhost:8080/api/post",
-		"application/json",
-		bytes.NewBuffer(jsonData))
+	resp, err := makePostRequest("/post", jsonData)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	var createdUser User
-	json.NewDecoder(resp.Body).Decode(&createdUser)
-	fmt.Printf("\nCreated User - ID: %d, Name: %s, Email: %s\n",
-		createdUser.ID, createdUser.Name, createdUser.Email)
+	displayResponse(resp)
 }
 
-// 3. PUT - Update user
 func updateUser() {
-	var id, name, email string
-	fmt.Print("Enter user ID to update: ")
-	fmt.Scanln(&id)
-	fmt.Print("Enter new name: ")
-	fmt.Scanln(&name)
-	fmt.Print("Enter new email: ")
-	fmt.Scanln(&email)
+	fmt.Println("\nUpdating user...")
+	id := getInputString("Enter user ID to update: ")
+	userData := getUserInput()
+	jsonData, err := json.Marshal(userData)
+	if err != nil {
+		fmt.Printf("Error creating JSON: %v\n", err)
+		return
+	}
 
-	updatedUser := User{Name: name, Email: email}
-	jsonData, _ := json.Marshal(updatedUser)
-
-	req, _ := http.NewRequest(http.MethodPut,
-		"http://localhost:8080/api/put/"+id,
-		bytes.NewBuffer(jsonData))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := makePutRequest("/put/"+id, jsonData)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("User updated successfully!")
-	} else {
-		fmt.Println("Error updating user!")
-	}
+	displayResponse(resp)
 }
 
-// 4. DELETE - Delete user
 func deleteUser() {
-	var id string
-	fmt.Print("Enter user ID to delete: ")
-	fmt.Scanln(&id)
+	fmt.Println("\nDeleting user...")
+	id := getInputString("Enter user ID to delete: ")
 
-	req, _ := http.NewRequest(http.MethodDelete,
-		"http://localhost:8080/api/delete/"+id,
-		nil)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := makeDeleteRequest("/delete/" + id)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("User deleted successfully!")
-	} else {
-		fmt.Println("Error deleting user!")
-	}
+	displayResponse(resp)
 }
 
-// 5. FORM - Submit form data
 func submitForm() {
-	var name, email string
-	fmt.Print("Enter name: ")
-	fmt.Scanln(&name)
-	fmt.Print("Enter email: ")
-	fmt.Scanln(&email)
-
+	fmt.Println("\nSubmitting form data...")
 	formData := url.Values{
-		"name":  {name},
-		"email": {email},
+		"name":  {getInputString("Enter name: ")},
+		"email": {getInputString("Enter email: ")},
 	}
 
-	resp, err := http.PostForm("http://localhost:8080/api/form", formData)
+	resp, err := http.PostForm(baseURL+"/form", formData)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	var result User
-	json.NewDecoder(resp.Body).Decode(&result)
-	fmt.Printf("\nForm Submitted - ID: %d, Name: %s, Email: %s\n",
-		result.ID, result.Name, result.Email)
+	displayResponse(resp)
 }
 
-// 6. UPLOAD - Upload file
 func uploadFile() {
-	fmt.Print("Enter file path to upload: ")
-	var filePath string
-	fmt.Scanln(&filePath)
+	fmt.Println("\nUploading file...")
+	filePath := getInputString("Enter file path to upload: ")
+	if err := handleFileUpload(filePath); err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+}
 
+// Helper Functions
+func getUserInput() User {
+	return User{
+		Name:  getInputString("Enter name: "),
+		Email: getInputString("Enter email: "),
+	}
+}
+
+func getInputString(prompt string) string {
+	fmt.Print(prompt)
+	var input string
+	fmt.Scanln(&input)
+	return input
+}
+
+func handleFileUpload(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Printf("Error opening file: %v\n", err)
-		return
+		return fmt.Errorf("error opening file: %v", err)
 	}
 	defer file.Close()
 
@@ -202,27 +198,83 @@ func uploadFile() {
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filePath[strings.LastIndex(filePath, "/")+1:])
 	if err != nil {
-		fmt.Printf("Error creating form file: %v\n", err)
-		return
+		return fmt.Errorf("error creating form file: %v", err)
 	}
 
 	io.Copy(part, file)
 	writer.Close()
 
-	req, _ := http.NewRequest("POST", "http://localhost:8080/api/upload", body)
+	req, _ := http.NewRequest("POST", baseURL+"/upload", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Error uploading file: %v\n", err)
-		return
+		return fmt.Errorf("error uploading file: %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("File uploaded successfully!")
-	} else {
-		fmt.Println("Error uploading file!")
+	displayResponse(resp)
+	return nil
+}
+
+// Display Functions
+func displayUsers(data interface{}) {
+	users, ok := data.([]interface{})
+	if !ok {
+		fmt.Println("No users found")
+		return
 	}
+
+	fmt.Println("\nUsers List:")
+	for _, u := range users {
+		user, ok := u.(map[string]interface{})
+		if ok {
+			fmt.Printf("ID: %v\nName: %v\nEmail: %v\nCreated At: %v\n\n",
+				user["id"], user["name"], user["email"], user["created_at"])
+		}
+	}
+}
+
+func displayResponse(resp *http.Response) {
+	var response Response
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		fmt.Printf("Error parsing response: %v\n", err)
+		return
+	}
+
+	fmt.Printf("\nResponse: %s (Status: %d)\n", response.Message, response.Status)
+	if response.Data != nil {
+		fmt.Printf("Data: %+v\n", response.Data)
+	}
+}
+
+// HTTP Request Functions
+func makeGetRequest(endpoint string) (*http.Response, error) {
+	return http.Get(baseURL + endpoint)
+}
+
+func makePostRequest(endpoint string, jsonData []byte) (*http.Response, error) {
+	return http.Post(baseURL+endpoint, "application/json", bytes.NewBuffer(jsonData))
+}
+
+func makePutRequest(endpoint string, jsonData []byte) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodPut, baseURL+endpoint, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	return client.Do(req)
+}
+
+func makeDeleteRequest(endpoint string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodDelete, baseURL+endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+	return client.Do(req)
 }
