@@ -1,10 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+	"math/cmplx"
+	"strconv"
+	"unsafe"
+)
 
-// Public constants and variables (package level)
-const LoginToken string = "sbfjkskds" // public
-var jwtToken int = 30000              // public
+// Public constants and variables
+const LoginToken string = "sbfjkskds"
+
+var jwtToken int = 30000
 
 // Additional constants
 const (
@@ -13,9 +20,9 @@ const (
 	DatabaseURL    = "localhost:5432"
 )
 
-// Using iota for enumerated constants
+// Days of week using iota
 const (
-	Sunday = iota // 0
+	Sunday = iota
 	Monday
 	Tuesday
 	Wednesday
@@ -24,61 +31,69 @@ const (
 	Saturday
 )
 
-// Type aliases
-type UserID uint64
-type Temperature float64
-type Status int
+// Size constants
+const (
+	KB = 1024
+	MB = KB * 1024
+	GB = MB * 1024
+	TB = GB * 1024
+)
 
 func main() {
+	fmt.Println("=== Basic Variable Declarations ===")
 
-	// Using jwtToken to avoid unused variable warning
+	// Using public variable
 	fmt.Printf("JWT Token: %v\n", jwtToken)
 
-	// Your original code
+	// Basic string variable
 	var username string = "utsho"
 	fmt.Println(username)
-	fmt.Printf("Variable is of type : %T \n", username)
+	fmt.Printf("Variable is of type: %T\n", username)
 
+	// Boolean variable
 	var isLoggedIn bool = true
 	fmt.Println(isLoggedIn)
-	fmt.Printf("Variable is of type : %T \n", isLoggedIn)
+	fmt.Printf("Variable is of type: %T\n", isLoggedIn)
 
+	// Integer variable
 	var smallVal int = 255
 	fmt.Println(smallVal)
-	fmt.Printf("Variable is of type : %T \n", smallVal)
+	fmt.Printf("Variable is of type: %T\n", smallVal)
 
+	// Float variables
 	var smallFloat float32 = 255.387478242492378
 	fmt.Println(smallFloat)
-	fmt.Printf("Variable is of type : %T \n", smallFloat)
+	fmt.Printf("Variable is of type: %T\n", smallFloat)
 
 	var longFloat float64 = 255.387478242492378
 	fmt.Println(longFloat)
-	fmt.Printf("Variable is of type : %T \n", longFloat)
+	fmt.Printf("Variable is of type: %T\n", longFloat)
 
-	// default values and some aliases
+	// Default value
 	var anotherVariable int
 	fmt.Println(anotherVariable)
-	fmt.Printf("Variable is of type : %T \n", anotherVariable)
+	fmt.Printf("Variable is of type: %T\n", anotherVariable)
 
-	// implicit type
+	// Implicit type
 	var website = "utshodey.tech"
 	fmt.Println(website)
-	fmt.Printf("Variable is of type : %T \n", website)
+	fmt.Printf("Variable is of type: %T\n", website)
 
-	// no var style
+	// Short declaration
 	numberofUser := 300000.0
 	fmt.Println(numberofUser)
-	fmt.Printf("Variable is of type : %T \n", website)
+	fmt.Printf("Variable is of type: %T\n", numberofUser)
 
-	// Numeric Types Examples
 	fmt.Println("\n=== Numeric Types ===")
+
+	// Different integer types
 	var (
-		age         uint8  = 25         // 0 to 255
-		temperature int8   = -10        // -128 to 127
-		population  uint16 = 65000      // 0 to 65535
-		distance    int16  = -30000     // -32768 to 32767
-		salary      uint32 = 50000      // 0 to 4294967295
-		worldPop    int64  = 7800000000 // -9223372036854775808 to 9223372036854775807
+		age         uint8  = 25
+		temperature int8   = -10
+		population  uint16 = 65000
+		distance    int16  = -30000
+		salary      uint32 = 50000
+		worldPop    int64  = 7800000000
 	)
 
 	fmt.Printf("age (uint8): %v\n", age)
@@ -90,25 +105,22 @@ func main() {
 
 	// Complex numbers
 	var (
-		c64  complex64  = 5 + 10i  // 32-bit real and imaginary parts
-		c128 complex128 = 10 + 15i // 64-bit real and imaginary parts
+		c64  complex64  = 5 + 10i
+		c128 complex128 = 10 + 15i
 	)
 	fmt.Printf("complex64: %v\n", c64)
 	fmt.Printf("complex128: %v\n", c128)
 
-	// String Operations Examples
 	fmt.Println("\n=== String Operations ===")
+
 	var nameOne string = "Utsho"
 	nameTwo := "Dey"
-
-	// String concatenation
 	fullName := nameOne + " " + nameTwo
+
 	fmt.Printf("Full name: %s\n", fullName)
-
-	// String length
 	fmt.Printf("Length of full name: %d\n", len(fullName))
+	fmt.Printf("First character of name: %c\n", fullName[0])
 
-	// Raw string literal (preserves formatting)
 	multiLineStr := `This is a
     multiline string
     that preserves formatting
@@ -116,58 +128,48 @@ func main() {
 	fmt.Println("Multiline string:")
 	fmt.Println(multiLineStr)
 
-	// String indexing
-	fmt.Printf("First character of name: %c\n", fullName[0])
-
-	// Constants Examples
 	fmt.Println("\n=== Constants ===")
+
 	fmt.Printf("Pi: %v\n", Pi)
 	fmt.Printf("Max Connections: %v\n", MaxConnections)
 	fmt.Printf("Database URL: %v\n", DatabaseURL)
+	fmt.Printf("Days: Sunday=%v, Monday=%v, Saturday=%v\n", Sunday, Monday, Saturday)
+	fmt.Printf("Size constants: KB=%d, MB=%d, GB=%d, TB=%d\n", KB, MB, GB, TB)
 
-	fmt.Println("\nDays of week:")
-	fmt.Printf("Sunday: %v\n", Sunday)
-	fmt.Printf("Monday: %v\n", Monday)
-	fmt.Printf("Saturday: %v\n", Saturday)
-
-	// Type Conversion Examples
 	fmt.Println("\n=== Type Conversion ===")
 
-	// Basic type conversion
 	var i int = 42
 	var f float64 = float64(i)
 	var u uint = uint(f)
-
 	fmt.Printf("int: %v, float64: %v, uint: %v\n", i, f, u)
 
-	// Using type aliases
-	var userId UserID = 12345
-	var temp Temperature = 36.6
-	var status Status = 1
+	// String conversion
+	str := "123"
+	if num, err := strconv.Atoi(str); err == nil {
+		fmt.Printf("String to int conversion: %d\n", num)
+	}
 
-	fmt.Printf("UserID: %v (%T)\n", userId, userId)
-	fmt.Printf("Temperature: %v (%T)\n", temp, temp)
-	fmt.Printf("Status: %v (%T)\n", status, status)
+	fmt.Println("\n=== Memory Sizes ===")
 
-	// Multiple variable declarations
-	fmt.Println("\n=== Multiple Variable Declarations ===")
+	fmt.Printf("Size of int: %d bytes\n", unsafe.Sizeof(int(0)))
+	fmt.Printf("Size of float64: %d bytes\n", unsafe.Sizeof(float64(0)))
+	fmt.Printf("Size of string: %d bytes\n", unsafe.Sizeof(string("")))
+	fmt.Printf("Size of bool: %d bytes\n", unsafe.Sizeof(bool(false)))
+
+	fmt.Println("\n=== Math Operations ===")
+
 	var (
-		name    string  = "John"
-		age2    int     = 25
-		height  float64 = 1.75
-		isAdmin bool    = false
+		intNum     int     = 42
+		floatNum   float64 = 42.5
+		complexNum         = 3 + 4i
 	)
-	fmt.Printf("Name: %v, Age: %v, Height: %v, Admin: %v\n", name, age2, height, isAdmin)
 
-	// Zero values
-	fmt.Println("\n=== Zero Values ===")
-	var (
-		zeroInt    int
-		zeroFloat  float64
-		zeroString string
-		zeroBool   bool
-		zeroPtr    *int
-	)
-	fmt.Printf("Zero values - Int: %v, Float: %v, String: %q, Bool: %v, Pointer: %v\n",
-		zeroInt, zeroFloat, zeroString, zeroBool, zeroPtr)
+	fmt.Printf("Square root of float: %f\n", math.Sqrt(floatNum))
+	fmt.Printf("Complex number magnitude: %f\n", cmplx.Abs(complexNum))
+	fmt.Printf("Integer power: %d\n", intNum*intNum)
+
+	// Pointer example
+	x := 42
+	ptr := &x
+	fmt.Printf("Value: %d, Pointer: %p, Dereferenced value: %d\n", x, ptr, *ptr)
 }
