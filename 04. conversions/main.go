@@ -6,130 +6,166 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
-	fmt.Println("Welcome to our pizza app")
-
+	// Initialize reader and clear screen
 	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("\033[H\033[2J") // Clear screen
 
-	// Float conversion (your original code)
-	fmt.Println("\n=== Rating Conversion ===")
-	fmt.Println("Please rate our pizza between 1 to 5:")
+	// Welcome message with colored output
+	fmt.Println("\033[1;36m=== Go Type Conversion Practice ===\033[0m")
+	fmt.Println("\033[1;33mLet's learn about different type conversions in Go!\033[0m")
+	time.Sleep(1 * time.Second)
+
+	// 1. Basic String to Number Conversions
+	fmt.Println("\n\033[1;32m1. BASIC NUMBER CONVERSIONS\033[0m")
+	fmt.Println("---------------------------")
+
+	// Float conversion with validation
+	fmt.Print("Enter a decimal number (e.g., 3.14): ")
 	input, _ := reader.ReadString('\n')
-	fmt.Println("Thank for rating:", input)
-
-	numRating, err := strconv.ParseFloat(strings.TrimSpace(input), 64)
+	numFloat, err := strconv.ParseFloat(strings.TrimSpace(input), 64)
 	if err != nil {
-		fmt.Println("Error converting rating:", err)
+		fmt.Printf("\033[31mError: Invalid decimal number (%v)\033[0m\n", err)
 	} else {
-		fmt.Println("Added 1 to your rating:", numRating+1)
+		fmt.Printf("As float64: %f\nRounded: %.2f\nScientific: %e\n",
+			numFloat, numFloat, numFloat)
 	}
 
-	// String to Integer conversion
-	fmt.Println("\n=== Age Conversion ===")
-	fmt.Println("Enter your age:")
-	ageInput, _ := reader.ReadString('\n')
-	age, err := strconv.Atoi(strings.TrimSpace(ageInput)) // Atoi = ASCII to Integer
+	// Integer conversion with validation
+	fmt.Print("\nEnter a whole number: ")
+	input, _ = reader.ReadString('\n')
+	numInt, err := strconv.Atoi(strings.TrimSpace(input))
 	if err != nil {
-		fmt.Println("Error converting age:", err)
+		fmt.Printf("\033[31mError: Invalid integer (%v)\033[0m\n", err)
 	} else {
-		fmt.Printf("Next year you will be: %d\n", age+1)
+		fmt.Printf("As integer: %d\nDoubled: %d\nSquared: %d\n",
+			numInt, numInt*2, numInt*numInt)
 	}
 
-	// String to Boolean conversion
-	fmt.Println("\n=== Boolean Conversion ===")
-	fmt.Println("Are you a vegetarian? (true/false):")
-	boolInput, _ := reader.ReadString('\n')
-	isVegetarian, err := strconv.ParseBool(strings.TrimSpace(boolInput))
-	if err != nil {
-		fmt.Println("Error converting boolean:", err)
-	} else {
-		if isVegetarian {
-			fmt.Println("We'll suggest vegetarian pizzas for you!")
-		} else {
-			fmt.Println("You can try our meat pizzas!")
+	// 2. Advanced Number Systems
+	fmt.Println("\n\033[1;32m2. NUMBER SYSTEM CONVERSIONS\033[0m")
+	fmt.Println("---------------------------")
+
+	fmt.Print("Enter a decimal number for conversion: ")
+	input, _ = reader.ReadString('\n')
+	if num, err := strconv.ParseInt(strings.TrimSpace(input), 10, 64); err == nil {
+		// Convert to different number systems
+		fmt.Printf("Binary (base 2):  %s\n", strconv.FormatInt(num, 2))
+		fmt.Printf("Octal (base 8):   %s\n", strconv.FormatInt(num, 8))
+		fmt.Printf("Hexadecimal:      %s\n", strconv.FormatInt(num, 16))
+		fmt.Printf("Base-36:          %s\n", strconv.FormatInt(num, 36))
+	}
+
+	// 3. String Manipulations and Conversions
+	fmt.Println("\n\033[1;32m3. STRING MANIPULATIONS\033[0m")
+	fmt.Println("---------------------------")
+
+	fmt.Print("Enter a sentence: ")
+	sentence, _ := reader.ReadString('\n')
+	sentence = strings.TrimSpace(sentence)
+
+	// String analysis
+	fmt.Printf("Original:      %s\n", sentence)
+	fmt.Printf("Uppercase:     %s\n", strings.ToUpper(sentence))
+	fmt.Printf("Lowercase:     %s\n", strings.ToLower(sentence))
+	fmt.Printf("Word Count:    %d\n", len(strings.Fields(sentence)))
+	fmt.Printf("Character Count: %d\n", len(sentence))
+
+	// 4. Currency and Price Calculations
+	fmt.Println("\n\033[1;32m4. CURRENCY CALCULATIONS\033[0m")
+	fmt.Println("---------------------------")
+
+	fmt.Print("Enter price in dollars (e.g., 49.99): ")
+	input, _ = reader.ReadString('\n')
+	if price, err := strconv.ParseFloat(strings.TrimSpace(input), 64); err == nil {
+		// Calculate various amounts
+		tax := price * 0.20      // 20% tax
+		discount := price * 0.15 // 15% discount
+		final := price + tax - discount
+
+		fmt.Printf("\nPrice Breakdown:\n")
+		fmt.Printf("Original Price: $%8.2f\n", price)
+		fmt.Printf("Tax (20%%):     $%8.2f\n", tax)
+		fmt.Printf("Discount (15%%): $%8.2f\n", discount)
+		fmt.Printf("Final Price:    $%8.2f\n", final)
+
+		// Convert to cents (integer)
+		cents := int64(final * 100)
+		fmt.Printf("In cents:       %d¢\n", cents)
+	}
+
+	// 5. Time and Date Conversions
+	fmt.Println("\n\033[1;32m5. DATE AND TIME CONVERSIONS\033[0m")
+	fmt.Println("---------------------------")
+
+	now := time.Now()
+	fmt.Printf("Current Time:     %v\n", now)
+	fmt.Printf("Unix Timestamp:   %d\n", now.Unix())
+	fmt.Printf("Formatted Date:   %s\n", now.Format("2006-01-02"))
+	fmt.Printf("Formatted Time:   %s\n", now.Format("15:04:05"))
+	fmt.Printf("Custom Format:    %s\n", now.Format("Monday, January 2, 2006"))
+
+	// 6. Boolean Conversions and Logic
+	fmt.Println("\n\033[1;32m6. BOOLEAN OPERATIONS\033[0m")
+	fmt.Println("---------------------------")
+
+	fmt.Print("Enter a boolean value (true/false): ")
+	input, _ = reader.ReadString('\n')
+	if boolVal, err := strconv.ParseBool(strings.TrimSpace(input)); err == nil {
+		fmt.Printf("Boolean value:   %v\n", boolVal)
+		fmt.Printf("Negated value:   %v\n", !boolVal)
+		fmt.Printf("As integer:      %d\n", map[bool]int{false: 0, true: 1}[boolVal])
+		fmt.Printf("As string:       %s\n", strconv.FormatBool(boolVal))
+	}
+
+	// 7. Multi-value Processing
+	fmt.Println("\n\033[1;32m7. MULTI-VALUE PROCESSING\033[0m")
+	fmt.Println("---------------------------")
+
+	fmt.Println("Enter three numbers separated by spaces (e.g., 10 20.5 30):")
+	input, _ = reader.ReadString('\n')
+	numbers := strings.Fields(strings.TrimSpace(input))
+
+	if len(numbers) == 3 {
+		// Try converting each number
+		if num1, err1 := strconv.Atoi(numbers[0]); err1 == nil {
+			if num2, err2 := strconv.ParseFloat(numbers[1], 64); err2 == nil {
+				if num3, err3 := strconv.Atoi(numbers[2]); err3 == nil {
+					// Perform calculations
+					sum := float64(num1) + num2 + float64(num3)
+					avg := sum / 3.0
+
+					fmt.Printf("\nResults:\n")
+					fmt.Printf("Sum:     %.2f\n", sum)
+					fmt.Printf("Average: %.2f\n", avg)
+					fmt.Printf("Product: %.2f\n", float64(num1)*num2*float64(num3))
+				}
+			}
 		}
 	}
 
-	// Integer to String conversion
-	fmt.Println("\n=== Price Conversion ===")
-	price := 1500
-	priceStr := strconv.Itoa(price) // Integer to ASCII
-	fmt.Printf("Price as string: %s, Type: %T\n", priceStr, priceStr)
+	// 8. Temperature Conversions
+	fmt.Println("\n\033[1;32m8. TEMPERATURE CONVERSIONS\033[0m")
+	fmt.Println("---------------------------")
 
-	// Float to String with precision
-	temperature := 98.6
-	tempStr := fmt.Sprintf("%.1f", temperature)
-	fmt.Printf("Temperature as string: %s, Type: %T\n", tempStr, tempStr)
+	fmt.Print("Enter temperature in Celsius: ")
+	input, _ = reader.ReadString('\n')
+	if celsius, err := strconv.ParseFloat(strings.TrimSpace(input), 64); err == nil {
+		// Convert to other scales
+		fahrenheit := (celsius * 9 / 5) + 32
+		kelvin := celsius + 273.15
 
-	// String to Int64
-	fmt.Println("\n=== Phone Number Conversion ===")
-	fmt.Println("Enter your phone number (numbers only):")
-	phoneInput, _ := reader.ReadString('\n')
-	phoneNum, err := strconv.ParseInt(strings.TrimSpace(phoneInput), 10, 64)
-	if err != nil {
-		fmt.Println("Error converting phone number:", err)
-	} else {
-		fmt.Printf("Phone number as int64: %d\n", phoneNum)
+		fmt.Printf("\nTemperature Conversions:\n")
+		fmt.Printf("Celsius:    %.2f°C\n", celsius)
+		fmt.Printf("Fahrenheit: %.2f°F\n", fahrenheit)
+		fmt.Printf("Kelvin:     %.2fK\n", kelvin)
 	}
 
-	// Base conversion examples
-	fmt.Println("\n=== Base Conversions ===")
-	// Decimal to Binary
-	num := 42
-	binary := strconv.FormatInt(int64(num), 2)
-	fmt.Printf("%d in binary: %s\n", num, binary)
-
-	// Decimal to Hexadecimal
-	hex := strconv.FormatInt(int64(num), 16)
-	fmt.Printf("%d in hexadecimal: %s\n", num, hex)
-
-	// Binary to Decimal
-	fmt.Println("Enter a binary number:")
-	binInput, _ := reader.ReadString('\n')
-	decimal, err := strconv.ParseInt(strings.TrimSpace(binInput), 2, 64)
-	if err != nil {
-		fmt.Println("Error converting binary:", err)
-	} else {
-		fmt.Printf("Binary to decimal: %d\n", decimal)
-	}
-
-	// String manipulation with conversion
-	fmt.Println("\n=== Price Calculator ===")
-	fmt.Println("Enter price (with decimal point):")
-	priceInput, _ := reader.ReadString('\n')
-	priceFloat, err := strconv.ParseFloat(strings.TrimSpace(priceInput), 64)
-	if err != nil {
-		fmt.Println("Error converting price:", err)
-	} else {
-		// Calculate tax (18%)
-		tax := priceFloat * 0.18
-		total := priceFloat + tax
-		// Format currency with 2 decimal places
-		fmt.Printf("Price: $%.2f\n", priceFloat)
-		fmt.Printf("Tax (18%%): $%.2f\n", tax)
-		fmt.Printf("Total: $%.2f\n", total)
-	}
-
-	// Multiple conversions in one operation
-	fmt.Println("\n=== Order Processing ===")
-	fmt.Println("Enter quantity and price separated by space (e.g., '2 10.5'):")
-	orderInput, _ := reader.ReadString('\n')
-	orderParts := strings.Fields(strings.TrimSpace(orderInput))
-
-	if len(orderParts) == 2 {
-		quantity, err1 := strconv.Atoi(orderParts[0])
-		price, err2 := strconv.ParseFloat(orderParts[1], 64)
-
-		if err1 == nil && err2 == nil {
-			total := float64(quantity) * price
-			fmt.Printf("Order total for %d items at $%.2f each: $%.2f\n",
-				quantity, price, total)
-		} else {
-			fmt.Println("Error processing order input")
-		}
-	} else {
-		fmt.Println("Invalid input format")
-	}
+	// Program completion
+	fmt.Println("\n\033[1;36m=== Program Complete ===\033[0m")
+	fmt.Println("\033[1;33mPress Enter to exit...\033[0m")
+	reader.ReadString('\n')
 }
