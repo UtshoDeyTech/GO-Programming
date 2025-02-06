@@ -6,108 +6,161 @@ import (
 )
 
 func main() {
-	fmt.Println("Welcome to time study of golang")
+	// Initialize and clear screen
+	fmt.Print("\033[H\033[2J")
+	fmt.Println("\033[1;36m=== Time Operations in Go ===\033[0m")
+	fmt.Println("\033[1;33mExploring time manipulation and formatting\033[0m")
+	time.Sleep(1 * time.Second)
 
-	// Current time (your original code)
-	presentTime := time.Now()
-	fmt.Println("\n=== Current Time ===")
-	fmt.Println("Current time:", presentTime)
-	fmt.Println("Formatted:", presentTime.Format("01-02-2006 15:04:05 Monday"))
+	// 1. Current Time Operations
+	fmt.Println("\n\033[1;32m1. CURRENT TIME\033[0m")
+	fmt.Println("---------------")
+	now := time.Now()
+	fmt.Printf("Current Time:     %v\n", now)
+	fmt.Printf("UTC Time:         %v\n", now.UTC())
+	fmt.Printf("Unix Timestamp:   %v\n", now.Unix())
+	fmt.Printf("Unix Nano:        %v\n", now.UnixNano())
+	fmt.Printf("Unix Milli:       %v\n", now.UnixMilli())
 
-	// Created date (your original code)
-	createDate := time.Date(2020, time.June, 10, 23, 23, 0, 0, time.UTC)
-	fmt.Println("\n=== Created Date ===")
-	fmt.Println("Created date:", createDate)
-	fmt.Println("Formatted:", createDate.Format("01-02-2006 Monday"))
+	// 2. Time Components
+	fmt.Println("\n\033[1;32m2. TIME COMPONENTS\033[0m")
+	fmt.Println("-----------------")
+	fmt.Printf("Year:             %d\n", now.Year())
+	fmt.Printf("Month:            %s (%d)\n", now.Month(), now.Month())
+	fmt.Printf("Day:              %d\n", now.Day())
+	fmt.Printf("Hour:             %d\n", now.Hour())
+	fmt.Printf("Minute:           %d\n", now.Minute())
+	fmt.Printf("Second:           %d\n", now.Second())
+	fmt.Printf("Nanosecond:       %d\n", now.Nanosecond())
+	fmt.Printf("Weekday:          %s\n", now.Weekday())
+	fmt.Printf("Day of Year:      %d\n", now.YearDay())
+	// Get ISO week number
+	_, week := now.ISOWeek()
+	fmt.Printf("Week Number:      %d\n", week)
 
-	// Different Time Formats
-	fmt.Println("\n=== Time Formatting ===")
-	fmt.Println("YYYY-MM-DD:", presentTime.Format("2006-01-02"))
-	fmt.Println("DD-MM-YYYY:", presentTime.Format("02-01-2006"))
-	fmt.Println("12 Hour:", presentTime.Format("03:04:05 PM"))
-	fmt.Println("24 Hour:", presentTime.Format("15:04:05"))
-	fmt.Println("Custom Format:", presentTime.Format("Monday, January 2, 2006 at 3:04 PM"))
+	// 3. Time Formatting
+	fmt.Println("\n\033[1;32m3. TIME FORMATTING\033[0m")
+	fmt.Println("-----------------")
+	fmt.Printf("Standard:         %v\n", now.Format("2006-01-02 15:04:05"))
+	fmt.Printf("With Timezone:    %v\n", now.Format("2006-01-02 15:04:05 MST"))
+	fmt.Printf("Custom Format 1:  %v\n", now.Format("Monday, January 2, 2006"))
+	fmt.Printf("Custom Format 2:  %v\n", now.Format("3:04 PM - Jan 2, 2006"))
+	fmt.Printf("ISO 8601:         %v\n", now.Format("2006-01-02T15:04:05Z07:00"))
+	fmt.Printf("RFC3339:          %v\n", now.Format(time.RFC3339))
+	fmt.Printf("Kitchen Format:   %v\n", now.Format(time.Kitchen))
 
-	// Time Components
-	fmt.Println("\n=== Time Components ===")
-	fmt.Printf("Year: %d\n", presentTime.Year())
-	fmt.Printf("Month: %s\n", presentTime.Month())
-	fmt.Printf("Day: %d\n", presentTime.Day())
-	fmt.Printf("Hour: %d\n", presentTime.Hour())
-	fmt.Printf("Minute: %d\n", presentTime.Minute())
-	fmt.Printf("Second: %d\n", presentTime.Second())
-	fmt.Printf("Weekday: %s\n", presentTime.Weekday())
-	fmt.Printf("Day of Year: %d\n", presentTime.YearDay())
+	// 4. Time Zone Operations
+	fmt.Println("\n\033[1;32m4. TIME ZONES\033[0m")
+	fmt.Println("-------------")
 
-	// Time Zone Operations
-	fmt.Println("\n=== Time Zones ===")
-	localTime := presentTime
-	utcTime := presentTime.UTC()
-	fmt.Printf("Local Time: %v\n", localTime.Format("15:04:05 MST"))
-	fmt.Printf("UTC Time: %v\n", utcTime.Format("15:04:05 MST"))
-
-	// Load specific timezone
-	estLocation, _ := time.LoadLocation("America/New_York")
-	estTime := presentTime.In(estLocation)
-	fmt.Printf("New York Time: %v\n", estTime.Format("15:04:05 MST"))
-
-	// Time Calculations
-	fmt.Println("\n=== Time Calculations ===")
-	futureTime := presentTime.Add(time.Hour * 24) // Add 24 hours
-	fmt.Printf("Tomorrow: %v\n", futureTime.Format("2006-01-02 15:04:05"))
-
-	pastTime := presentTime.Add(-time.Hour * 24) // Subtract 24 hours
-	fmt.Printf("Yesterday: %v\n", pastTime.Format("2006-01-02 15:04:05"))
-
-	// Duration Calculations
-	fmt.Println("\n=== Duration Calculations ===")
-	duration := futureTime.Sub(presentTime)
-	fmt.Printf("Duration between times: %v\n", duration)
-
-	// Time Parsing
-	fmt.Println("\n=== Time Parsing ===")
-	timeStr := "2024-02-03 15:04:05"
-	parsedTime, err := time.Parse("2006-01-02 15:04:05", timeStr)
-	if err != nil {
-		fmt.Println("Error parsing time:", err)
-	} else {
-		fmt.Printf("Parsed time: %v\n", parsedTime)
+	// Load various time zones
+	locations := []string{
+		"America/New_York",
+		"Europe/London",
+		"Asia/Tokyo",
+		"Australia/Sydney",
+		"Pacific/Auckland",
 	}
 
-	// Working with Unix Timestamps
-	fmt.Println("\n=== Unix Timestamps ===")
-	unixTime := presentTime.Unix()
-	unixNano := presentTime.UnixNano()
-	fmt.Printf("Unix Timestamp: %v\n", unixTime)
-	fmt.Printf("Unix Nano Timestamp: %v\n", unixNano)
+	for _, loc := range locations {
+		if location, err := time.LoadLocation(loc); err == nil {
+			localTime := now.In(location)
+			fmt.Printf("%-16s %s\n", loc+":", localTime.Format("15:04:05 MST"))
+		}
+	}
 
-	// Convert Unix timestamp back to Time
-	timeFromUnix := time.Unix(unixTime, 0)
-	fmt.Printf("Time from Unix: %v\n", timeFromUnix.Format("2006-01-02 15:04:05"))
+	// 5. Time Calculations
+	fmt.Println("\n\033[1;32m5. TIME CALCULATIONS\033[0m")
+	fmt.Println("-------------------")
 
-	// Time Comparison
-	fmt.Println("\n=== Time Comparison ===")
-	time1 := time.Now()
-	time2 := time1.Add(time.Hour)
-	fmt.Printf("time1 before time2: %v\n", time1.Before(time2))
-	fmt.Printf("time1 after time2: %v\n", time1.After(time2))
-	fmt.Printf("times equal: %v\n", time1.Equal(time2))
+	// Future times
+	fmt.Println("\nFuture Times:")
+	fmt.Printf("Tomorrow:         %v\n", now.Add(24*time.Hour).Format("2006-01-02 15:04:05"))
+	fmt.Printf("Next Week:        %v\n", now.Add(7*24*time.Hour).Format("2006-01-02 15:04:05"))
+	fmt.Printf("Next Month:       %v\n", now.AddDate(0, 1, 0).Format("2006-01-02 15:04:05"))
+	fmt.Printf("Next Year:        %v\n", now.AddDate(1, 0, 0).Format("2006-01-02 15:04:05"))
 
-	// Sleep and Timer Example
-	fmt.Println("\n=== Sleep and Timer ===")
-	fmt.Println("Starting short sleep...")
-	time.Sleep(2 * time.Second)
-	fmt.Println("Sleep finished!")
+	// Past times
+	fmt.Println("\nPast Times:")
+	fmt.Printf("Yesterday:        %v\n", now.Add(-24*time.Hour).Format("2006-01-02 15:04:05"))
+	fmt.Printf("Last Week:        %v\n", now.Add(-7*24*time.Hour).Format("2006-01-02 15:04:05"))
+	fmt.Printf("Last Month:       %v\n", now.AddDate(0, -1, 0).Format("2006-01-02 15:04:05"))
+	fmt.Printf("Last Year:        %v\n", now.AddDate(-1, 0, 0).Format("2006-01-02 15:04:05"))
 
-	// Timer example
-	timer := time.NewTimer(1 * time.Second)
-	<-timer.C
-	fmt.Println("Timer finished!")
+	// 6. Duration Calculations
+	fmt.Println("\n\033[1;32m6. DURATION CALCULATIONS\033[0m")
+	fmt.Println("----------------------")
 
-	// Date Difference
-	fmt.Println("\n=== Date Difference ===")
-	date1 := time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC)
-	date2 := time.Date(2024, time.December, 31, 0, 0, 0, 0, time.UTC)
-	daysDiff := date2.Sub(date1).Hours() / 24
-	fmt.Printf("Days between dates: %.0f\n", daysDiff)
+	// Create some dates for comparison
+	futureDate := now.AddDate(0, 0, 10) // 10 days from now
+	pastDate := now.AddDate(0, 0, -10)  // 10 days ago
+
+	// Calculate durations
+	futureDuration := futureDate.Sub(now)
+	pastDuration := now.Sub(pastDate)
+
+	fmt.Printf("Future Duration:   %v\n", futureDuration)
+	fmt.Printf("Past Duration:     %v\n", pastDuration)
+	fmt.Printf("In Hours:         %.2f\n", futureDuration.Hours())
+	fmt.Printf("In Minutes:       %.2f\n", futureDuration.Minutes())
+	fmt.Printf("In Seconds:       %.2f\n", futureDuration.Seconds())
+
+	// 7. Time Parsing
+	fmt.Println("\n\033[1;32m7. TIME PARSING\033[0m")
+	fmt.Println("---------------")
+
+	timeFormats := []string{
+		"2006-01-02 15:04:05",
+		"Jan 2, 2006 3:04 PM",
+		"2006-01-02T15:04:05Z07:00",
+		"Monday, January 2, 2006",
+		"15:04:05",
+	}
+
+	sampleTime := "2024-02-06 15:04:05"
+	fmt.Printf("Parsing: %s\n", sampleTime)
+
+	for _, format := range timeFormats {
+		if parsed, err := time.Parse(format, sampleTime); err == nil {
+			fmt.Printf("With format %-25s: %v\n", format, parsed)
+		}
+	}
+
+	// 8. Time Comparison
+	fmt.Println("\n\033[1;32m8. TIME COMPARISON\033[0m")
+	fmt.Println("------------------")
+
+	time1 := now
+	time2 := now.Add(time.Hour)
+	time3 := now.Add(-time.Hour)
+
+	fmt.Printf("Time1:            %v\n", time1.Format("15:04:05"))
+	fmt.Printf("Time2:            %v\n", time2.Format("15:04:05"))
+	fmt.Printf("Time3:            %v\n", time3.Format("15:04:05"))
+	fmt.Printf("Time1 before Time2: %v\n", time1.Before(time2))
+	fmt.Printf("Time1 after Time3:  %v\n", time1.After(time3))
+	fmt.Printf("Time1 equal Time1:  %v\n", time1.Equal(time1))
+
+	// 9. Calendar Calculations
+	fmt.Println("\n\033[1;32m9. CALENDAR CALCULATIONS\033[0m")
+	fmt.Println("-----------------------")
+
+	// First and last day of current month
+	currentYear, currentMonth, _ := now.Date()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, now.Location())
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	fmt.Printf("First of Month:    %v\n", firstOfMonth.Format("2006-01-02"))
+	fmt.Printf("Last of Month:     %v\n", lastOfMonth.Format("2006-01-02"))
+	fmt.Printf("Days in Month:     %d\n", lastOfMonth.Day())
+
+	// Days until end of year
+	lastOfYear := time.Date(currentYear, 12, 31, 0, 0, 0, 0, now.Location())
+	daysLeft := lastOfYear.Sub(now).Hours() / 24
+	fmt.Printf("Days left in year: %.0f\n", daysLeft)
+
+	// Program completion
+	fmt.Println("\n\033[1;36m=== Program Complete ===\033[0m")
+	fmt.Println("\033[1;33mPress Enter to exit...\033[0m")
+	fmt.Scanln()
 }
